@@ -345,6 +345,11 @@ textarea {
   cursor: pointer;
   font-weight: 600;
   font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
 }
 
 /* ==================== MENSAJE ==================== */
@@ -464,7 +469,32 @@ textarea {
   white-space: nowrap;
 }
 
-/* ...existing code... */
+/* ==================== BOTONES EN TABLA ==================== */
+.btn-table {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-table--info {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  color: white;
+}
+
+.btn-table--info:hover {
+  background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+  transform: scale(1.05);
+}
+
+/* ==================== PANEL CON SCROLL ==================== */
+.form-panel__body--scroll {
+  max-height: 500px;
+  overflow-y: auto;
+}
 
 /* ==================== RESPONSIVE ==================== */
 
@@ -638,6 +668,129 @@ textarea {
   }
 }
 
+/* ==================== PANEL INPUT DATA ANCHO ==================== */
+.form-panel--wide {
+  flex: 0 0 900px;
+}
+
+.form-panel__ref {
+  color: #667eea;
+  font-weight: 700;
+}
+
+/* ==================== GRID INPUT DATA ==================== */
+.input-data-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.input-data-item {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tamaño pequeño: enteros (4 por fila) */
+.input-data-item--small {
+  flex: 0 0 calc(25% - 10px);
+  min-width: 120px;
+}
+
+/* Tamaño mediano: decimales (3 por fila) */
+.input-data-item--medium {
+  flex: 0 0 calc(33.33% - 10px);
+  min-width: 180px;
+}
+
+/* Tamaño grande: strings largos (2 por fila) */
+.input-data-item--large {
+  flex: 0 0 calc(50% - 10px);
+  min-width: 280px;
+}
+
+/* Tamaño completo: 1 por fila */
+.input-data-item--full {
+  flex: 0 0 100%;
+}
+
+.input-data-item .input-field {
+  font-size: 0.85rem;
+  padding: 8px 10px;
+}
+
+.input-data-item .input-label {
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==================== COLUMNAS TABLA ==================== */
+.th--center {
+  text-align: center;
+}
+
+.td--center {
+  text-align: center;
+}
+
+/* ==================== RESPONSIVE INPUT DATA ==================== */
+@media (max-width: 1400px) {
+  .form-panel--wide {
+    flex: 0 0 700px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .form-panel--wide {
+    flex: 0 0 500px;
+  }
+
+  .input-data-item--small {
+    flex: 0 0 calc(33.33% - 10px);
+  }
+
+  .input-data-item--medium {
+    flex: 0 0 calc(50% - 10px);
+  }
+
+  .input-data-item--large {
+    flex: 0 0 100%;
+  }
+}
+
+@media (max-width: 992px) {
+  .form-panel--wide {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .input-data-item--small {
+    flex: 0 0 calc(50% - 10px);
+  }
+
+  .input-data-item--medium {
+    flex: 0 0 calc(50% - 10px);
+  }
+
+  .input-data-item--large {
+    flex: 0 0 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .input-data-item--small,
+  .input-data-item--medium,
+  .input-data-item--large {
+    flex: 0 0 100%;
+  }
+
+  .form-panel__ref {
+    display: block;
+    margin-top: 5px;
+  }
+}
+
 /* ==================== MEJORAS TÁCTILES ==================== */
 @media (hover: none) and (pointer: coarse) {
   /* Dispositivos táctiles */
@@ -657,5 +810,37 @@ textarea {
   .search-input {
     font-size: 16px; /* Evita zoom en iOS */
     min-height: 44px;
+  }
+}
+
+/* ==================== CONTENEDOR EXPANDIDO ==================== */
+.product-container--expanded {
+  max-width: 1800px;
+}
+
+/* Ajustar también el list-panel cuando está expandido */
+.product-container--expanded .list-panel {
+  max-width: 700px;
+}
+
+/* ==================== RESPONSIVE PARA CONTENEDOR EXPANDIDO ==================== */
+@media (max-width: 1600px) {
+  .product-container--expanded {
+    max-width: 100%;
+    padding: 0 15px;
+  }
+
+  .product-container--expanded .form-panel--wide {
+    flex: 0 0 600px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .product-container--expanded .form-panel--wide {
+    flex: 0 0 450px;
+  }
+
+  .product-container--expanded .list-panel {
+    max-width: 100%;
   }
 }
