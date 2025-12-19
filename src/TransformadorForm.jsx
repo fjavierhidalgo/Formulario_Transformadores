@@ -31,7 +31,7 @@ export default function TransformadorForm() {
   const cargarTransformadores = async () => {
     try {
       const res = await fetch(
-        "http://Transformadores.somee.com/Transformadores/Lista"
+        "https://Transformadores.somee.com/Transformadores/Lista"
       );
       const data = await res.json();
       setTransformadores(data.transformadores || []);
@@ -62,7 +62,7 @@ export default function TransformadorForm() {
 
   const handleCreate = async () => {
     try {
-      const res = await fetch("http://Transformadores.somee.com/Transformadores", {
+      const res = await fetch("https://Transformadores.somee.com/Transformadores", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -91,7 +91,7 @@ export default function TransformadorForm() {
 
   const handleUpdate = async () => {
     try {
-      const res = await fetch(`http://Transformadores.somee.com/Transformadores`, {
+      const res = await fetch(`https://Transformadores.somee.com/Transformadores`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -132,7 +132,7 @@ export default function TransformadorForm() {
 
     try {
       const res = await fetch(
-        `http://Transformadores.somee.com/InputData/${transformador.referencia}`
+        `https://Transformadores.somee.com/InputData/${transformador.referencia}`
       );
 
       if (!res.ok) {
