@@ -844,3 +844,26 @@ textarea {
     max-width: 100%;
   }
 }
+
+/* ==================== CAMPOS EDITABLES ==================== */
+.input-field--editable {
+  background: #e8f5e9 !important;
+  border-color: #4caf50 !important;
+  color: #1b5e20 !important;
+}
+
+.input-field--editable:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
+}
+
+/* ==================== BADGE NUEVO ==================== */
+.badge-new {
+  background: #ff9800;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  margin-left: 10px;
+  font-weight: 600;
+}

@@ -308,8 +308,13 @@ export default function TransformadorForm() {
           <InputData
             inputData={inputData}
             referenciaActual={referenciaActual}
+            transformadorId={formData.id}
             mensajeInputData={mensajeInputData}
             onClose={handleCloseInputData}
+            onSave={(data) => {
+              setInputData(data);
+              setMensajeInputData("✔ Datos guardados correctamente");
+            }}
           />
         )}
 
