@@ -668,6 +668,50 @@ textarea {
   }
 }
 
+/* ===================== PRIMERA FILA INPUT DATA ===================== */
+.input-data-row {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.input-data-row__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-data-row__label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #888;
+  white-space: nowrap;
+  min-width: fit-content;
+}
+
+.input-data-row__input {
+  flex: 1;
+  padding: 4px 6px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  background: #f8f9fa;
+  height: 26px;
+  box-sizing: border-box;
+}
+
+.input-data-row__input:not(:disabled) {
+  background: #fff;
+  border-color: #80bdff;
+}
+
+.input-data-row__input.input-field--editable {
+  background: #e8f5e9 !important;
+  border-color: #4caf50 !important;
+  color: #1b5e20 !important;
+}
+
 /* ==================== PANEL INPUT DATA ANCHO ==================== */
 .form-panel--wide {
   flex: 0 0 900px;
@@ -866,4 +910,45 @@ textarea {
   font-size: 0.7rem;
   margin-left: 10px;
   font-weight: 600;
+}
+
+/* ==================== CAMPOS DEL PANEL TRANSFORMADOR (igual que InputData) ==================== */
+.form-panel .input-group .input-label {
+  font-size: 0.65rem;
+  margin-bottom: 2px;
+  color: #888;
+}
+
+.form-panel .input-group .input-field {
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  height: 26px;
+  box-sizing: border-box;
+}
+
+.form-panel .input-group .textarea-field {
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  min-height: 80px;
+  box-sizing: border-box;
+}
+
+/* ==================== LISTADO TRANSFORMADORES (mismo tamaño que InputData) ==================== */
+.list-panel__title {
+  font-size: 0.85rem;
+}
+
+.product-table th {
+  font-size: 0.65rem;
+  padding: 8px 10px;
+}
+
+.product-table td {
+  font-size: 0.75rem;
+  padding: 8px 10px;
+}
+
+.btn-table {
+  font-size: 0.65rem;
+  padding: 4px 8px;
 }

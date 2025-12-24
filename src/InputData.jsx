@@ -21,7 +21,6 @@ export default function InputData({
       setFormData(inputDataProp);
       setModoEdicion(false);
     } else {
-      // Crear nuevo registro con valores por defecto
       setFormData(getEmptyInputData(transformadorId));
       setModoEdicion(true);
     }
@@ -81,8 +80,8 @@ export default function InputData({
 
   /* ===================== LABELS LEGIBLES PARA INPUT DATA ===================== */
   const inputDataLabels = {
-    project: "Proyecto",
-    customer: "Cliente",
+    project: "PROJECT",
+    customer: "CUSTOMER",
     power: "Potencia",
     frecc: "Frecuencia",
     cooling: "Refrigeración",
@@ -93,8 +92,8 @@ export default function InputData({
     hVTapPosRegulacion: "HV Tap Pos Regulación",
     hVTapPosMax: "HV Tap Pos Máx",
     oilKind: "Tipo de Aceite",
-    standard: "Estándar",
-    date: "Fecha",
+    standard: "STANDARD",
+    date: "DATE",
     rev: "Revisión",
     type: "Tipo",
     oFNum: "OF Número",
@@ -129,8 +128,16 @@ export default function InputData({
     kRAB: "KRAB"
   };
 
-  /* ===================== CAMPOS A OCULTAR ===================== */
-  const camposOcultos = ["id", "transformadorId"];
+  /* ===================== CAMPOS DE LA PRIMERA FILA CON ANCHOS ===================== */
+  const camposPrimeraFila = [
+    { key: "project", width: "15%" },
+    { key: "customer", width: "40%" },
+    { key: "standard", width: "30%" },
+    { key: "date", width: "15%" }
+  ];
+
+  /* ===================== CAMPOS A OCULTAR EN EL GRID GENERAL ===================== */
+  const camposOcultos = ["id", "transformadorId", "project", "customer", "standard", "date"];
 
   /* ===================== TIPOS DE CAMPO ===================== */
   const camposNumericos = [
@@ -164,11 +171,8 @@ export default function InputData({
   const formatValue = (key, value) => {
     if (value === null || value === undefined) return "";
     if (key === "date" && value) {
-      // Para input type="date" necesitamos formato YYYY-MM-DD
-      if (modoEdicion) {
-        return value.split("T")[0];
-      }
-      return new Date(value).toLocaleDateString("es-ES");
+      // Siempre devolver formato YYYY-MM-DD para inputs tipo date
+      return value.split("T")[0];
     }
     return value.toString();
   };
@@ -236,6 +240,31 @@ export default function InputData({
       </div>
 
       <div className="form-panel__body form-panel__body--scroll">
+        
+        {/* ===================== PRIMERA FILA: PROJECT, CUSTOMER, STANDARD, DATE ===================== */}
+        <div className="input-data-row">
+          {camposPrimeraFila.map(({ key, width }) => {
+            const value = formData[key];
+            const isDate = key === "date";
+
+            return (
+              <div className="input-data-row__item" style={{ width }} key={key}>
+                <label className="input-data-row__label">
+                  {inputDataLabels[key]}
+                </label>
+                <input
+                  type={isDate ? "date" : "text"}
+                  className={`input-data-row__input ${modoEdicion ? 'input-field--editable' : ''}`}
+                  value={formatValue(key, value)}
+                  onChange={(e) => handleChange(key, isDate ? e.target.value + "T00:00:00.000Z" : e.target.value)}
+                  disabled={!modoEdicion}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ===================== RESTO DE CAMPOS ===================== */}
         <div className="input-data-grid">
           {Object.entries(formData)
             .filter(([key]) => !camposOcultos.includes(key))
