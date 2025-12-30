@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 export default function InputData({ 
   inputData: inputDataProp, 
@@ -14,15 +14,26 @@ export default function InputData({
   const [modoEdicion, setModoEdicion] = useState(false);
   const [mensaje, setMensaje] = useState(mensajeInicial || "");
   const [guardando, setGuardando] = useState(false);
+  
+  // Ref para controlar si acabamos de guardar
+  const justSaved = useRef(false);
 
   /* ===================== INICIALIZAR FORM DATA ===================== */
   useEffect(() => {
+    // Si acabamos de guardar, no sobrescribir
+    if (justSaved.current) {
+      justSaved.current = false;
+      return;
+    }
+    
     if (inputDataProp) {
       setFormData(inputDataProp);
       setModoEdicion(false);
+      setMensaje("");
     } else {
       setFormData(getEmptyInputData(transformadorId));
       setModoEdicion(true);
+      setMensaje("");
     }
   }, [inputDataProp, transformadorId]);
 
@@ -82,50 +93,11 @@ export default function InputData({
   const inputDataLabels = {
     project: "PROJECT",
     customer: "CUSTOMER",
-    power: "Potencia",
-    frecc: "Frecuencia",
-    cooling: "Refrigeración",
-    hVTapNegNumero: "HV Tap Neg Número",
-    hVTapNegRegulacion: "HV Tap Neg Regulación",
-    hVTapNegMin: "HV Tap Neg Mín",
-    hVTapPosNumero: "HV Tap Pos Número",
-    hVTapPosRegulacion: "HV Tap Pos Regulación",
-    hVTapPosMax: "HV Tap Pos Máx",
-    oilKind: "Tipo de Aceite",
+    power: "POWER",
+    frecc: "Frecc.",
+    cooling: "Cooling",
     standard: "STANDARD",
-    date: "DATE",
-    rev: "Revisión",
-    type: "Tipo",
-    oFNum: "OF Número",
-    designer: "Diseñador",
-    lineVoltHV1: "Voltaje Línea HV1",
-    lineVoltGuion: "Voltaje Línea Guión",
-    lineVoltLV1: "Voltaje Línea LV1",
-    lineVoltVacio: "Voltaje Línea Vacío",
-    lineVoltVacio2: "Voltaje Línea Vacío 2",
-    conectionHV1: "Conexión HV1",
-    conectionLV1: "Conexión LV1",
-    conectionVacio2: "Conexión Vacío 2",
-    turnsLV1: "Vueltas LV1",
-    foils: "Láminas",
-    altitude: "Altitud",
-    tMax: "T Máx",
-    hVBIL: "HV BIL",
-    lVBIL: "LV BIL",
-    hVKIND: "HV Kind",
-    lVKIND: "LV Kind",
-    nLLosses: "NL Losses",
-    llosses: "L Losses",
-    hVMAT: "HV Material",
-    lVMAT: "LV Material",
-    noise: "Ruido",
-    sC: "SC",
-    noiseKP: "Noise KP",
-    noiseKHi: "Noise KHi",
-    noiseKSB: "Noise KSB",
-    noiseKV: "Noise KV",
-    kRBT: "KRBT",
-    kRAB: "KRAB"
+    date: "DATE"
   };
 
   /* ===================== CAMPOS DE LA PRIMERA FILA CON ANCHOS ===================== */
@@ -136,28 +108,17 @@ export default function InputData({
     { key: "date", width: "15%" }
   ];
 
-  /* ===================== CAMPOS A OCULTAR EN EL GRID GENERAL ===================== */
-  const camposOcultos = ["id", "transformadorId", "project", "customer", "standard", "date"];
+  /* ===================== CAMPOS DE LA TABLA IZQUIERDA ===================== */
+  const camposTablaIzquierda = ["power", "frecc", "cooling"];
 
   /* ===================== TIPOS DE CAMPO ===================== */
   const camposNumericos = [
-    "power", "frecc", "hVTapNegNumero", "hVTapNegRegulacion", "hVTapNegMin",
-    "hVTapPosNumero", "hVTapPosRegulacion", "hVTapPosMax", "lineVoltHV1",
-    "lineVoltGuion", "lineVoltLV1", "lineVoltVacio", "lineVoltVacio2",
-    "turnsLV1", "foils", "altitude", "tMax", "noise", "sC", "kRBT", "kRAB"
+    "power", "frecc", 
+    "hVTapNegNumero", "hVTapPosNumero",
+    "hVTapNegRegulacion", "hVTapPosRegulacion",
+    "hVTapNegMin", "hVTapPosMax",
+    "lineVoltHV1", "lineVoltGuion"
   ];
-
-  /* ===================== DETERMINAR TAMAÑO DEL CAMPO ===================== */
-  const getFieldSize = (key, value) => {
-    if (key === "date") return "medium";
-    if (camposNumericos.includes(key)) return "small";
-    if (typeof value === "string") {
-      if (value.length > 20) return "large";
-      if (value.length > 10) return "medium";
-      return "medium";
-    }
-    return "medium";
-  };
 
   /* ===================== MANEJAR CAMBIOS ===================== */
   const handleChange = (key, value) => {
@@ -171,10 +132,50 @@ export default function InputData({
   const formatValue = (key, value) => {
     if (value === null || value === undefined) return "";
     if (key === "date" && value) {
-      // Siempre devolver formato YYYY-MM-DD para inputs tipo date
       return value.split("T")[0];
     }
     return value.toString();
+  };
+
+  /* ===================== CAMPOS CALCULADOS ===================== */
+  const calcularLineVoltHV1Formula = () => {
+    if (!formData) return 0;
+    const { hVTapPosNumero, hVTapPosRegulacion, lineVoltHV1 } = formData;
+    return (hVTapPosNumero * hVTapPosRegulacion * lineVoltHV1 / 100).toFixed(2);
+  };
+
+  const getHV2Condicionado = () => {
+    if (!formData) return "-";
+    return formData.hVKIND === "HV2" ? "HV2" : "-";
+  };
+
+  // Constante para raíz cuadrada de 3
+  const SQRT3 = Math.sqrt(3);
+
+  // Ph. Volt columna 2: Si conectionHV1 = D -> lineVoltHV1, sino lineVoltHV1 / √3
+  const calcularPhVoltCol2 = () => {
+    if (!formData) return 0;
+    const { conectionHV1, lineVoltHV1 } = formData;
+    const valor = conectionHV1 === "D" ? lineVoltHV1 : lineVoltHV1 / SQRT3;
+    return valor.toFixed(2);
+  };
+
+  // Ph. Volt columna 3: Si conectionHV1 = D -> fila2col3, sino fila2col3 / √3
+  const calcularPhVoltCol3 = () => {
+    if (!formData) return 0;
+    const { conectionHV1 } = formData;
+    const fila2Col3 = parseFloat(calcularLineVoltHV1Formula());
+    const valor = conectionHV1 === "D" ? fila2Col3 : fila2Col3 / SQRT3;
+    return valor.toFixed(2);
+  };
+
+  // Ph. Volt columna 4: Si hVKIND = HV1 -> "-", sino (Si conectionHV1 = D -> lineVoltGuion, sino lineVoltGuion / √3)
+  const calcularPhVoltCol4 = () => {
+    if (!formData) return "-";
+    const { hVKIND, conectionHV1, lineVoltGuion } = formData;
+    if (hVKIND === "HV1") return "-";
+    const valor = conectionHV1 === "D" ? lineVoltGuion : lineVoltGuion / SQRT3;
+    return valor.toFixed(2);
   };
 
   /* ===================== GUARDAR ===================== */
@@ -196,14 +197,18 @@ export default function InputData({
       }
 
       const data = await res.json();
-      setFormData(data);
+      
+      // Marcar que acabamos de guardar para evitar que el useEffect sobrescriba
+      justSaved.current = true;
+      
+      setFormData(data);  // Actualiza el estado local con los datos guardados
       setMensaje(formData.id === 0 
         ? `✔ Input Data creado con ID: ${data.id}` 
         : `✔ Input Data actualizado`
       );
       setModoEdicion(false);
       
-      if (onSave) onSave(data);
+      if (onSave) onSave(data);  // Notifica al padre con los nuevos datos
     } catch (err) {
       setMensaje("⚠ Error al guardar Input Data");
     }
@@ -264,34 +269,212 @@ export default function InputData({
           })}
         </div>
 
-        {/* ===================== RESTO DE CAMPOS ===================== */}
-        <div className="input-data-grid">
-          {Object.entries(formData)
-            .filter(([key]) => !camposOcultos.includes(key))
-            .map(([key, value]) => {
-              const size = getFieldSize(key, value);
-              const isNumeric = camposNumericos.includes(key);
-              const isDate = key === "date";
+        {/* ===================== CONTENEDOR DE TABLAS ===================== */}
+        <div className="input-data-tables">
+          
+          {/* ===================== COLUMNA IZQUIERDA ===================== */}
+          <div className="input-data-column">
+            
+            {/* ===================== TABLA POWER, FRECC, COOLING, HV TAP ===================== */}
+            <div className="input-data-table input-data-table--single">
+              {camposTablaIzquierda.map((key) => {
+                const value = formData[key];
+                const isNumeric = camposNumericos.includes(key);
 
-              return (
-                <div 
-                  className={`input-data-item input-data-item--${size}`} 
-                  key={key}
-                >
-                  <label className="input-label">
-                    {inputDataLabels[key] || key}
-                  </label>
+                return (
+                  <React.Fragment key={key}>
+                    <div className="input-data-table__label">
+                      {inputDataLabels[key]}
+                    </div>
+                    <div className="input-data-table__cell">
+                      <input
+                        type={isNumeric ? "number" : "text"}
+                        step={isNumeric ? "any" : undefined}
+                        className={`input-data-table__input ${modoEdicion ? 'input-field--editable' : ''}`}
+                        value={formatValue(key, value)}
+                        onChange={(e) => handleChange(key, e.target.value)}
+                        disabled={!modoEdicion}
+                      />
+                    </div>
+                  </React.Fragment>
+                );
+              })}
+              <div className="input-data-table__label">
+                HV Tap
+              </div>
+            </div>
+
+            {/* ===================== TABLA HV TAP (2 COLUMNAS) ===================== */}
+            <div className="input-data-table input-data-table--double input-data-table--middle">
+              <div className="input-data-table__row">
+                <div className="input-data-table__label">-</div>
+                <div className="input-data-table__label">+</div>
+              </div>
+              <div className="input-data-table__row">
+                <div className="input-data-table__cell">
                   <input
-                    type={isDate ? "date" : isNumeric ? "number" : "text"}
-                    step={isNumeric ? "any" : undefined}
-                    className={`input-field ${modoEdicion ? 'input-field--editable' : ''}`}
-                    value={formatValue(key, value)}
-                    onChange={(e) => handleChange(key, isDate ? e.target.value + "T00:00:00.000Z" : e.target.value)}
+                    type="number"
+                    step="any"
+                    className={`input-data-table__input ${modoEdicion ? 'input-field--editable' : ''}`}
+                    value={formatValue("hVTapNegNumero", formData.hVTapNegNumero)}
+                    onChange={(e) => handleChange("hVTapNegNumero", e.target.value)}
                     disabled={!modoEdicion}
                   />
                 </div>
-              );
-            })}
+                <div className="input-data-table__cell">
+                  <input
+                    type="number"
+                    step="any"
+                    className={`input-data-table__input ${modoEdicion ? 'input-field--editable' : ''}`}
+                    value={formatValue("hVTapPosNumero", formData.hVTapPosNumero)}
+                    onChange={(e) => handleChange("hVTapPosNumero", e.target.value)}
+                    disabled={!modoEdicion}
+                  />
+                </div>
+              </div>
+              <div className="input-data-table__row">
+                <div className="input-data-table__cell">
+                  <input
+                    type="number"
+                    step="any"
+                    className={`input-data-table__input ${modoEdicion ? 'input-field--editable' : ''}`}
+                    value={formatValue("hVTapNegRegulacion", formData.hVTapNegRegulacion)}
+                    onChange={(e) => handleChange("hVTapNegRegulacion", e.target.value)}
+                    disabled={!modoEdicion}
+                  />
+                </div>
+                <div className="input-data-table__cell">
+                  <input
+                    type="number"
+                    step="any"
+                    className={`input-data-table__input ${modoEdicion ? 'input-field--editable' : ''}`}
+                    value={formatValue("hVTapPosRegulacion", formData.hVTapPosRegulacion)}
+                    onChange={(e) => handleChange("hVTapPosRegulacion", e.target.value)}
+                    disabled={!modoEdicion}
+                  />
+                </div>
+              </div>
+              <div className="input-data-table__row">
+                <div className="input-data-table__label">Min</div>
+                <div className="input-data-table__label">Max</div>
+              </div>
+              <div className="input-data-table__row">
+                <div className="input-data-table__cell">
+                  <input
+                    type="number"
+                    step="any"
+                    className={`input-data-table__input ${modoEdicion ? 'input-field--editable' : ''}`}
+                    value={formatValue("hVTapNegMin", formData.hVTapNegMin)}
+                    onChange={(e) => handleChange("hVTapNegMin", e.target.value)}
+                    disabled={!modoEdicion}
+                  />
+                </div>
+                <div className="input-data-table__cell">
+                  <input
+                    type="number"
+                    step="any"
+                    className={`input-data-table__input ${modoEdicion ? 'input-field--editable' : ''}`}
+                    value={formatValue("hVTapPosMax", formData.hVTapPosMax)}
+                    onChange={(e) => handleChange("hVTapPosMax", e.target.value)}
+                    disabled={!modoEdicion}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ===================== TABLA OIL KIND ===================== */}
+            <div className="input-data-table input-data-table--single input-data-table--bottom">
+              <div className="input-data-table__label">
+                Oil Kind
+              </div>
+              <div className="input-data-table__cell">
+                <input
+                  type="text"
+                  className={`input-data-table__input ${modoEdicion ? 'input-field--editable' : ''}`}
+                  value={formatValue("oilKind", formData.oilKind)}
+                  onChange={(e) => handleChange("oilKind", e.target.value)}
+                  disabled={!modoEdicion}
+                />
+              </div>
+            </div>
+
+          </div>
+
+          {/* ===================== TABLA 4 COLUMNAS (LINE VOLT, ETC) ===================== */}
+          <div className="input-data-table input-data-table--quad">
+            {/* Fila 1: Headers */}
+            <div className="input-data-table__row">
+              <div className="input-data-table__label"></div>
+              <div className="input-data-table__label">HV1</div>
+              <div className="input-data-table__label">{formData.hVKIND || "-"}</div>
+              <div className="input-data-table__label">{getHV2Condicionado()}</div>
+            </div>
+            
+            {/* Fila 2: Line Volt */}
+            <div className="input-data-table__row">
+              <div className="input-data-table__label">Line Volt</div>
+              <div className="input-data-table__cell">
+                <input
+                  type="number"
+                  step="any"
+                  className={`input-data-table__input ${modoEdicion ? 'input-field--editable' : ''}`}
+                  value={formatValue("lineVoltHV1", formData.lineVoltHV1)}
+                  onChange={(e) => handleChange("lineVoltHV1", e.target.value)}
+                  disabled={!modoEdicion}
+                />
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularLineVoltHV1Formula()}</span>
+              </div>
+              <div className="input-data-table__cell">
+                <input
+                  type="number"
+                  step="any"
+                  className={`input-data-table__input ${modoEdicion ? 'input-field--editable' : ''}`}
+                  value={formatValue("lineVoltGuion", formData.lineVoltGuion)}
+                  onChange={(e) => handleChange("lineVoltGuion", e.target.value)}
+                  disabled={!modoEdicion}
+                />
+              </div>
+            </div>
+
+            {/* Fila 3: Conection */}
+            <div className="input-data-table__row">
+              <div className="input-data-table__label">Conection</div>
+              <div className="input-data-table__cell">
+                <input
+                  type="text"
+                  className={`input-data-table__input ${modoEdicion ? 'input-field--editable' : ''}`}
+                  value={formatValue("conectionHV1", formData.conectionHV1)}
+                  onChange={(e) => handleChange("conectionHV1", e.target.value)}
+                  disabled={!modoEdicion}
+                />
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--readonly">
+                <span className="input-data-table__value">{formData.conectionHV1 || "-"}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--readonly">
+                <span className="input-data-table__value">{formData.conectionHV1 || "-"}</span>
+              </div>
+            </div>
+
+            {/* Fila 4: Ph. Volt */}
+            <div className="input-data-table__row">
+              <div className="input-data-table__label">Ph. Volt</div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularPhVoltCol2()}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularPhVoltCol3()}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularPhVoltCol4()}</span>
+              </div>
+            </div>
+
+            {/* Filas 5-14: Se añadirán después */}
+          </div>
+
         </div>
 
         {/* ===================== BOTONES ===================== */}
