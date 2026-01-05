@@ -178,6 +178,45 @@ export default function InputData({
     return valor.toFixed(2);
   };
 
+  // Constante 10^3 = 1000
+  const MIL = 1000;
+
+  // Line Amp columna 2: Power / √3 / LineVoltHV1 * 1000
+  const calcularLineAmpCol2 = () => {
+    if (!formData) return 0;
+    const { power, lineVoltHV1 } = formData;
+    if (lineVoltHV1 === 0) return 0;
+    const valor = (power / SQRT3 / lineVoltHV1) * MIL;
+    return valor.toFixed(2);
+  };
+
+  // Line Amp columna 3: 
+  // Si hVKIND = HV1: Power / √3 / (LineVoltHV1 + Fila2Col3) * 1000
+  // Sino: Power / √3 / (LineVoltGuion + Fila2Col3) * 1000
+  const calcularLineAmpCol3 = () => {
+    if (!formData) return 0;
+    const { power, hVKIND, lineVoltHV1, lineVoltGuion } = formData;
+    const fila2Col3 = parseFloat(calcularLineVoltHV1Formula());
+    const divisor = hVKIND === "HV1" 
+      ? (lineVoltHV1 + fila2Col3) 
+      : (lineVoltGuion + fila2Col3);
+    if (divisor === 0) return 0;
+    const valor = (power / SQRT3 / divisor) * MIL;
+    return valor.toFixed(2);
+  };
+
+  // Line Amp columna 4: 
+  // Si hVKIND = HV1: "-"
+  // Sino: Power / √3 / LineVoltGuion * 1000
+  const calcularLineAmpCol4 = () => {
+    if (!formData) return "-";
+    const { power, hVKIND, lineVoltGuion } = formData;
+    if (hVKIND === "HV1") return "-";
+    if (lineVoltGuion === 0) return 0;
+    const valor = (power / SQRT3 / lineVoltGuion) * MIL;
+    return valor.toFixed(2);
+  };
+
   /* ===================== GUARDAR ===================== */
   const handleGuardar = async () => {
     setGuardando(true);
@@ -472,7 +511,21 @@ export default function InputData({
               </div>
             </div>
 
-            {/* Filas 5-14: Se añadirán después */}
+            {/* Fila 5: Line Amp. */}
+            <div className="input-data-table__row">
+              <div className="input-data-table__label">Line Amp.</div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularLineAmpCol2()}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularLineAmpCol3()}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularLineAmpCol4()}</span>
+              </div>
+            </div>
+
+            {/* Filas 6-14: Se añadirán después */}
           </div>
 
         </div>

@@ -1019,7 +1019,7 @@ textarea {
   width: 100%;
   padding: 4px 6px;
   border: none;
-  font-size: 0.75rem;
+  font-size: 0.55rem;
   height: 26px;
   box-sizing: border-box;
   text-align: center;
@@ -1090,7 +1090,7 @@ textarea {
 }
 
 .input-data-table__value {
-  font-size: 0.75rem;
+  font-size: 0.55rem;
   color: #495057;
   font-weight: 500;
 }
