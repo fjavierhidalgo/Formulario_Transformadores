@@ -217,6 +217,52 @@ export default function InputData({
     return valor.toFixed(2);
   };
 
+  // Ph. Amp columna 2: 
+  // Si conectionHV1 = D: (Power / 3) / LineVoltHV1 * 1000
+  // Sino: (Power / √3) / LineVoltHV1 * 1000
+  const calcularPhAmpCol2 = () => {
+    if (!formData) return 0;
+    const { power, conectionHV1, lineVoltHV1 } = formData;
+    if (lineVoltHV1 === 0) return 0;
+    const divisor = conectionHV1 === "D" ? 3 : SQRT3;
+    const valor = (power / divisor / lineVoltHV1) * MIL;
+    return valor.toFixed(2);
+  };
+
+  // Ph. Amp columna 3:
+  // Si hVKIND = HV1:
+  //   Si conectionHV1 = D: (Power / 3) / (LineVoltHV1 + fila2col3) * 1000
+  //   Sino: (Power / √3) / (LineVoltHV1 + fila2col3) * 1000
+  // Sino:
+  //   Si conectionHV1 = D: (Power / 3) / (LineVoltGuion + fila2col3) * 1000
+  //   Sino: (Power / √3) / (LineVoltGuion + fila2col3) * 1000
+  const calcularPhAmpCol3 = () => {
+    if (!formData) return 0;
+    const { power, hVKIND, conectionHV1, lineVoltHV1, lineVoltGuion } = formData;
+    const fila2Col3 = parseFloat(calcularLineVoltHV1Formula());
+    const divisorPower = conectionHV1 === "D" ? 3 : SQRT3;
+    const baseVolt = hVKIND === "HV1" ? lineVoltHV1 : lineVoltGuion;
+    const divisorVolt = baseVolt + fila2Col3;
+    if (divisorVolt === 0) return 0;
+    const valor = (power / divisorPower / divisorVolt) * MIL;
+    return valor.toFixed(2);
+  };
+
+  // Ph. Amp columna 4:
+  // Si hVKIND = HV1: "-"
+  // Sino:
+  //   Si conectionHV1 = D: (Power / 3) / LineVoltGuion * 1000
+  //   Sino: (Power / √3) / LineVoltGuion * 1000
+  const calcularPhAmpCol4 = () => {
+    if (!formData) return "-";
+    const { power, hVKIND, conectionHV1, lineVoltGuion } = formData;
+    if (hVKIND === "HV1") return "-";
+    if (lineVoltGuion === 0) return 0;
+    const divisor = conectionHV1 === "D" ? 3 : SQRT3;
+    const valor = (power / divisor / lineVoltGuion) * MIL;
+    return valor.toFixed(2);
+  };
+
   /* ===================== GUARDAR ===================== */
   const handleGuardar = async () => {
     setGuardando(true);
@@ -525,7 +571,21 @@ export default function InputData({
               </div>
             </div>
 
-            {/* Filas 6-14: Se añadirán después */}
+            {/* Fila 6: Ph. Amp. */}
+            <div className="input-data-table__row">
+              <div className="input-data-table__label">Ph. Amp.</div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularPhAmpCol2()}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularPhAmpCol3()}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularPhAmpCol4()}</span>
+              </div>
+            </div>
+
+            {/* Filas 7-14: Se añadirán después */}
           </div>
 
         </div>
