@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 
 export default function InputData({ 
   inputData: inputDataProp, 
+  hiVoltage: hiVoltageProp,
   referenciaActual,
   transformadorId,
   mensajeInputData: mensajeInicial, 
@@ -11,12 +12,33 @@ export default function InputData({
 
   /* ===================== ESTADO LOCAL ===================== */
   const [formData, setFormData] = useState(null);
+  const [hiVoltageData, setHiVoltageData] = useState(null);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [mensaje, setMensaje] = useState(mensajeInicial || "");
   const [guardando, setGuardando] = useState(false);
   
   // Ref para controlar si acabamos de guardar
   const justSaved = useRef(false);
+
+  /* ===================== INICIALIZAR HI VOLTAGE DATA ===================== */
+  useEffect(() => {
+    setHiVoltageData(hiVoltageProp || getEmptyHiVoltage());
+  }, [hiVoltageProp]);
+
+  /* ===================== ESTRUCTURA VACÍA DE HI VOLTAGE ===================== */
+  const getEmptyHiVoltage = () => ({
+    id: 0,
+    transformadorId: 0,
+    wire: "",
+    stripSizeMin: 0,
+    stripSizeMax: 0,
+    parallCondGrossWireMin: 0,
+    parallCondGrossWireMax: 0,
+    nudeCondGrossWire: 0,
+    nudeCond: 0,
+    parallCondMin: 0,
+    parallCondMax: 0
+  });
 
   /* ===================== INICIALIZAR FORM DATA ===================== */
   useEffect(() => {
@@ -263,6 +285,150 @@ export default function InputData({
     return valor.toFixed(2);
   };
 
+  // Variable VT:
+  // Si conectionLV1 = "z": (lineVoltLV1 / √3) * 1.155 / turnsLV1
+  // Sino:
+  //   Si conectionLV1 = "d": lineVoltLV1 / turnsLV1
+  //   Sino: (lineVoltLV1 / √3) / turnsLV1
+  const calcularVT = () => {
+    if (!formData) return 0;
+    const { conectionLV1, lineVoltLV1, turnsLV1 } = formData;
+    if (turnsLV1 === 0) return 0;
+    
+    if (conectionLV1 === "z") {
+      return (lineVoltLV1 / SQRT3) * 1.155 / turnsLV1;
+    } else if (conectionLV1 === "d") {
+      return lineVoltLV1 / turnsLV1;
+    } else {
+      return (lineVoltLV1 / SQRT3) / turnsLV1;
+    }
+  };
+
+  // Turns columna 2:
+  // Si hVKIND = HV1: Math.trunc(fila4col2 / VT)
+  // Sino: Math.trunc((fila4col2 - fila4col4) / VT)
+  const calcularTurnsCol2 = () => {
+    if (!formData) return 0;
+    const { hVKIND } = formData;
+    const VT = calcularVT();
+    if (VT === 0) return 0;
+    
+    const fila4Col2 = parseFloat(calcularPhVoltCol2());
+    const fila4Col4 = parseFloat(calcularPhVoltCol4()) || 0;
+    
+    if (hVKIND === "HV1") {
+      return Math.trunc(fila4Col2 / VT);
+    } else {
+      return Math.trunc((fila4Col2 - fila4Col4) / VT);
+    }
+  };
+
+  // Turns columna 3: Math.trunc(fila4col2 / VT)
+  const calcularTurnsCol3 = () => {
+    if (!formData) return 0;
+    const VT = calcularVT();
+    if (VT === 0) return 0;
+    
+    const fila4Col2 = parseFloat(calcularPhVoltCol2());
+    return Math.trunc(fila4Col2 / VT);
+  };
+
+  // Turns columna 4:
+  // Si hVKIND = HV1: "-"
+  // Sino: Math.trunc(fila4col4 / VT)
+  const calcularTurnsCol4 = () => {
+    if (!formData) return "-";
+    const { hVKIND } = formData;
+    if (hVKIND === "HV1") return "-";
+    
+    const VT = calcularVT();
+    if (VT === 0) return 0;
+    
+    const fila4Col4 = parseFloat(calcularPhVoltCol4()) || 0;
+    return Math.trunc(fila4Col4 / VT);
+  };
+
+  /* ===================== FILA 8: SECTION ===================== */
+  // Section columna 2:
+  // Si Wire = "S": ((StripSizeMin * StripSizeMax) - 0.375) * ParallCondGrossWireMin * ParallCondGrossWireMax
+  // Sino: Si hVKIND = "HV1": (π * (NudeCondGrossWire/2)²) * ParallCondGrossWireMin * ParallCondGrossWireMax
+  //       Sino: (π * (NudeCond/2)²) * ParallCondMin * ParallCondMax
+  const calcularSectionCol2 = () => {
+    if (!formData || !hiVoltageData) return "0.00";
+    const { hVKIND } = formData;
+    const { wire, stripSizeMin, stripSizeMax, parallCondGrossWireMin, parallCondGrossWireMax, nudeCondGrossWire, nudeCond, parallCondMin, parallCondMax } = hiVoltageData;
+    
+    let resultado;
+    if (wire === "S") {
+      resultado = ((stripSizeMin * stripSizeMax) - 0.375) * parallCondGrossWireMin * parallCondGrossWireMax;
+    } else {
+      if (hVKIND === "HV1") {
+        resultado = (Math.PI * Math.pow(nudeCondGrossWire / 2, 2)) * parallCondGrossWireMin * parallCondGrossWireMax;
+      } else {
+        resultado = (Math.PI * Math.pow(nudeCond / 2, 2)) * parallCondMin * parallCondMax;
+      }
+    }
+    return resultado.toFixed(2);
+  };
+
+  // Section columna 3:
+  // Si Wire = "S": ((StripSizeMin * StripSizeMax) - 0.375) * ParallCondGrossWireMin * ParallCondGrossWireMax
+  // Sino: (π * (NudeCondGrossWire/2)²) * ParallCondGrossWireMin * ParallCondGrossWireMax
+  const calcularSectionCol3 = () => {
+    if (!hiVoltageData) return "0.00";
+    const { wire, stripSizeMin, stripSizeMax, parallCondGrossWireMin, parallCondGrossWireMax, nudeCondGrossWire } = hiVoltageData;
+    
+    let resultado;
+    if (wire === "S") {
+      resultado = ((stripSizeMin * stripSizeMax) - 0.375) * parallCondGrossWireMin * parallCondGrossWireMax;
+    } else {
+      resultado = (Math.PI * Math.pow(nudeCondGrossWire / 2, 2)) * parallCondGrossWireMin * parallCondGrossWireMax;
+    }
+    return resultado.toFixed(2);
+  };
+
+  // Section columna 4:
+  // Si hVKIND = "HV1": "-"
+  // Sino: (π * (NudeCondGrossWire/2)²) * ParallCondGrossWireMin * ParallCondGrossWireMax
+  const calcularSectionCol4 = () => {
+    if (!formData || !hiVoltageData) return "-";
+    const { hVKIND } = formData;
+    if (hVKIND === "HV1") return "-";
+    
+    const { parallCondGrossWireMin, parallCondGrossWireMax, nudeCondGrossWire } = hiVoltageData;
+    const resultado = (Math.PI * Math.pow(nudeCondGrossWire / 2, 2)) * parallCondGrossWireMin * parallCondGrossWireMax;
+    return resultado.toFixed(2);
+  };
+
+  /* ===================== FILA 9: DENSITY ===================== */
+  // Density columna 2: (fila6col2 / fila8col2).toFixed(2)
+  const calcularDensityCol2 = () => {
+    const fila6col2 = parseFloat(calcularPhAmpCol2()) || 0;
+    const fila8col2 = parseFloat(calcularSectionCol2()) || 0;
+    if (fila8col2 === 0) return "0.00";
+    return (fila6col2 / fila8col2).toFixed(2);
+  };
+
+  // Density columna 3: (fila6col3 / fila8col3).toFixed(2)
+  const calcularDensityCol3 = () => {
+    const fila6col3 = parseFloat(calcularPhAmpCol3()) || 0;
+    const fila8col3 = parseFloat(calcularSectionCol3()) || 0;
+    if (fila8col3 === 0) return "0.00";
+    return (fila6col3 / fila8col3).toFixed(2);
+  };
+
+  // Density columna 4: Si hVKIND = "HV1" → "-", sino (fila6col3 / VT).toFixed(2)
+  const calcularDensityCol4 = () => {
+    if (!formData) return "-";
+    const { hVKIND } = formData;
+    if (hVKIND === "HV1") return "-";
+    
+    const fila6col3 = parseFloat(calcularPhAmpCol3()) || 0;
+    const VT = calcularVT();
+    if (VT === 0) return "0.00";
+    return (fila6col3 / VT).toFixed(2);
+  };
+
   /* ===================== GUARDAR ===================== */
   const handleGuardar = async () => {
     setGuardando(true);
@@ -329,7 +495,7 @@ export default function InputData({
         </button>
       </div>
 
-      <div className="form-panel__body form-panel__body--scroll">
+      <div className="form-panel__body form-panel__body--scroll" style={{ position: "relative" }}>
         
         {/* ===================== PRIMERA FILA: PROJECT, CUSTOMER, STANDARD, DATE ===================== */}
         <div className="input-data-row">
@@ -585,7 +751,49 @@ export default function InputData({
               </div>
             </div>
 
-            {/* Filas 7-14: Se añadirán después */}
+            {/* Fila 7: Turns */}
+            <div className="input-data-table__row">
+              <div className="input-data-table__label">Turns</div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularTurnsCol2()}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularTurnsCol3()}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularTurnsCol4()}</span>
+              </div>
+            </div>
+
+            {/* Fila 8: Section */}
+            <div className="input-data-table__row">
+              <div className="input-data-table__label">Section</div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularSectionCol2()}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularSectionCol3()}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularSectionCol4()}</span>
+              </div>
+            </div>
+
+            {/* Fila 9: Density */}
+            <div className="input-data-table__row">
+              <div className="input-data-table__label">Density</div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularDensityCol2()}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularDensityCol3()}</span>
+              </div>
+              <div className="input-data-table__cell input-data-table__cell--calculated">
+                <span className="input-data-table__value">{calcularDensityCol4()}</span>
+              </div>
+            </div>
+
+            {/* Filas 10-14: Se añadirán después */}
           </div>
 
         </div>
@@ -613,6 +821,20 @@ export default function InputData({
         </div>
 
         {mensaje && <div className="mensaje">{mensaje}</div>}
+
+        {/* ===================== INDICADOR HI VOLTAGE ===================== */}
+        <div style={{ 
+          position: "absolute", 
+          bottom: "50px", 
+          right: "15px", 
+          fontSize: "0.6rem", 
+          color: "#888",
+          display: "flex",
+          gap: "4px"
+        }}>
+          <span style={{ fontWeight: "600" }}>WIRE:</span>
+          <span>{hiVoltageData?.wire || "-"}</span>
+        </div>
       </div>
     </div>
   );

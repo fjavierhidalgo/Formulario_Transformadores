@@ -1011,7 +1011,7 @@ textarea {
   border-bottom: 1px solid #ced4da;
 }
 
-.input-data-table__cell:last-child {
+.input-data-table__row:last-child .input-data-table__cell {
   border-bottom: none;
 }
 

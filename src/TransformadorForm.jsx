@@ -24,6 +24,9 @@ export default function TransformadorForm() {
   const [mensajeInputData, setMensajeInputData] = useState("");
   const [referenciaActual, setReferenciaActual] = useState("");
 
+  /* ===================== DATOS HI VOLTAGE ===================== */
+  const [hiVoltage, setHiVoltage] = useState(null);
+
   /* ===================== CARGA LISTA ===================== */
   useEffect(() => {
     cargarTransformadores();
@@ -127,37 +130,52 @@ export default function TransformadorForm() {
     setMensaje(`✔ Transformador ${transformador.referencia} cargado`);
   };
 
-  /* ===================== CARGAR INPUT DATA ===================== */
+  /* ===================== CARGAR INPUT DATA Y HI VOLTAGE ===================== */
   const handleInputDataClick = async (e, transformador) => {
     e.stopPropagation();
 
-    try {
-      const res = await fetch(
-        `https://Transformadores.somee.com/InputData/${transformador.referencia}`
-      );
+    // Cargar InputData y HiVoltage en paralelo
+    const [inputDataRes, hiVoltageRes] = await Promise.allSettled([
+      fetch(`https://Transformadores.somee.com/InputData/${transformador.referencia}`),
+      fetch(`https://Transformadores.somee.com/HiVoltage/${transformador.referencia}`)
+    ]);
 
-      if (!res.ok) {
-        setMensajeInputData("❗ No se encontró Input Data para este transformador");
-        setInputData(null);
-        setReferenciaActual(transformador.referencia);
-        setMostrarInputData(true);
-        setMostrarPanel(false);
-        return;
+    // Procesar InputData
+    let inputDataLoaded = null;
+    let inputDataMsg = "";
+    
+    if (inputDataRes.status === "fulfilled" && inputDataRes.value.ok) {
+      try {
+        inputDataLoaded = await inputDataRes.value.json();
+        inputDataMsg = "✔ Input Data cargado";
+      } catch {
+        inputDataMsg = "⚠ Error al procesar Input Data";
       }
-
-      const data = await res.json();
-      setInputData(data);
-      setReferenciaActual(transformador.referencia);
-      setMostrarInputData(true);
-      setMostrarPanel(false);
-      setMensajeInputData(`✔ Input Data cargado`);
-    } catch (err) {
-      setMensajeInputData("⚠ Error al consultar Input Data");
-      setInputData(null);
-      setReferenciaActual(transformador.referencia);
-      setMostrarInputData(true);
-      setMostrarPanel(false);
+    } else {
+      inputDataMsg = "❗ No se encontró Input Data para este transformador";
     }
+
+    // Procesar HiVoltage
+    let hiVoltageLoaded = null;
+    
+    if (hiVoltageRes.status === "fulfilled" && hiVoltageRes.value.ok) {
+      try {
+        hiVoltageLoaded = await hiVoltageRes.value.json();
+        if (inputDataLoaded) {
+          inputDataMsg += " | HiVoltage cargado";
+        }
+      } catch {
+        console.warn("Error al procesar HiVoltage");
+      }
+    }
+
+    // Actualizar estados
+    setInputData(inputDataLoaded);
+    setHiVoltage(hiVoltageLoaded);
+    setReferenciaActual(transformador.referencia);
+    setMostrarInputData(true);
+    setMostrarPanel(false);
+    setMensajeInputData(inputDataMsg);
   };
 
   /* ===================== CERRAR INPUT DATA ===================== */
@@ -307,6 +325,7 @@ export default function TransformadorForm() {
         {mostrarInputData && (
           <InputData
             inputData={inputData}
+            hiVoltage={hiVoltage}
             referenciaActual={referenciaActual}
             transformadorId={formData.id}
             mensajeInputData={mensajeInputData}
