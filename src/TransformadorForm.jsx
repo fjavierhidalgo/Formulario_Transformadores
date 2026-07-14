@@ -185,7 +185,7 @@ export default function TransformadorForm() {
 
   /* ===================== RENDER ===================== */
   return (
-    <div className={`product-container ${mostrarInputData ? 'product-container--expanded' : ''}`}>
+    <div className={`product-container transformador-container ${mostrarInputData ? 'product-container--expanded' : ''}`}>
 
       {/* ===================== HEADER ===================== */}
       <header className="product-header">

@@ -91,6 +91,10 @@ textarea {
   padding: 0;
 }
 
+.transformador-container {
+  margin-left: 20px;
+}
+
 /* ==================== BANDA SUPERIOR (HEADER) ==================== */
 .product-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
